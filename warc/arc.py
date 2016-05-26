@@ -11,6 +11,7 @@ import re
 import io
 import warnings
 import gzip
+from dateutil.parser import parse as dateutil_parse
 
 from .utils import CaseInsensitiveDict, status_code
 
@@ -59,7 +60,7 @@ class ARCHeader(CaseInsensitiveDict):
             date = date.strftime("%Y%m%d%H%M%S")
         else:
             try:
-                datetime.datetime.strptime(date, "%Y%m%d%H%M%S")
+                date = dateutil_parse(date)
             except ValueError:
                 raise ValueError("Couldn't parse the date '%s' in file "
                                  "header" % date)
@@ -385,7 +386,7 @@ class ARCFile(object):
             url, ip_address, date, content_type, length = header.split()
             self.file_headers = {
                 "ip_address": ip_address,
-                "date": datetime.datetime.strptime(date, "%Y%m%d%H%M%S"),
+                "date": dateutil_parse(date),
                 "org": organisation,
                 "url": url,
                 'content_type': content_type,
@@ -397,7 +398,7 @@ class ARCFile(object):
              checksum, location, offset, filename, length) = header.split()
             self.file_headers = {
                 "ip_address": ip_address,
-                "date": datetime.datetime.strptime(date, "%Y%m%d%H%M%S"),
+                "date": dateutil_parse(date),
                 "org": organisation,
                 'url': url,
                 'content_type': content_type,
@@ -416,7 +417,7 @@ class ARCFile(object):
             line = self.fileobj.readline()
             self.file_meta = self.file_meta + line
             current_size = current_size + len(line)
-        self.fileobj.readline()  # Lose the separator newline
+        # self.fileobj.readline()  # Lose the separator newline
 
     def _strip_initial_new_lines(self):
         line = self.fileobj.readline()
@@ -462,7 +463,7 @@ class ARCFile(object):
         header = self._read_record_header(line)
         payload = self.fileobj.read(header['length'])
 
-        self.fileobj.readline()  # Munge the separator newline.
+        # self.fileobj.readline()  # Munge the separator newline.
         return ARCRecord(header=header, payload=payload)
 
     def read(self):
